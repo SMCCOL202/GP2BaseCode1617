@@ -3,6 +3,9 @@ project (Utils)
 
 find_package(TinyXML REQUIRED)
 find_package(SDL2 REQUIRED)
+find_package(OPENGL REQUIRED)
+find_package(GLM REQUIRED)
+find_package(GLEW REQUIRED)
 
 set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -l")
 

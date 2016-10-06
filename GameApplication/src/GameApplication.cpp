@@ -5,11 +5,11 @@ GameApplication::GameApplication()
  	m_pWindow=nullptr;
 	m_WindowWidth=640;
 	m_WindowHeight=480;
-	m_WindowCreationFlags=0;
+	m_WindowCreationFlags = SDL_WINDOW_OPENGL;
 	CREATELOG("log.txt");
 	m_bIsActive=false;
 	m_bIsRunning=false;
-  m_WindowTitle="Game";
+	m_WindowTitle="Game";
 }
 
 GameApplication::~GameApplication()
@@ -77,6 +77,7 @@ bool GameApplication::init(int args,char * arg[])
   m_WindowTitle=m_Options.getOption("WindowTitle");
 	createWindow(m_WindowTitle,m_WindowWidth,m_WindowHeight,m_WindowCreationFlags);
 
+	initGraphics();
 
 	m_bIsActive=true;
 	return true;
@@ -86,6 +87,8 @@ void GameApplication::OnQuit()
 {
 	//set our boolean which controls the loop to false
 	m_bIsRunning = false;
+	//clean up, reverse oreder!!!
+	SDL_GL_DeleteContext(m_GLcontext);
 	SDL_DestroyWindow(m_pWindow);
 	SDL_Quit();
 	CLOSELOG();
@@ -164,5 +167,109 @@ void GameApplication::run()
 				}
 			}
 		}
+
+		update();
+
+		OnBeginRender();
+		render();
+		OnEndRender();
 	}
 }
+
+void GameApplication::OnBeginRender()
+{
+	//Set the clear colour(background)
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	//clear the colour and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+}
+
+void GameApplication::render()
+{
+}
+
+void GameApplication::OnEndRender()
+{
+	SDL_GL_SwapWindow(m_pWindow);
+}
+
+void GameApplication::update()
+{
+}
+
+void GameApplication::initGraphics()
+{
+	//OpenGL Context
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	m_GLcontext = SDL_GL_CreateContext(m_pWindow);
+
+	//GLEW
+	glewExperimental = GL_TRUE;
+
+	GLenum err = glewInit();
+
+	if (GLEW_OK != err)
+	{
+		LOG(ERROR, "ERROR: %s", glewGetErrorString(err));
+	}
+
+	//OpenGL States
+	//Smooth Shading
+	glShadeModel(GL_SMOOTH);
+
+	//Clear tge background to black
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	//Clear the depth buffer to 1.0
+	glClearDepth(1.0f);
+
+	//Enable depth testing
+	glEnable(GL_DEPTH_TEST);
+
+	//The depth test to use
+	glEnable(GL_LEQUAL);
+
+	//Turn on best perspecting correction
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+	//Set our viewport
+	setViewport((int)m_WindowWidth, (int)m_WindowHeight);
+}
+
+//Function to set / reset viewport
+void GameApplication::setViewport(int width, int height)
+{
+	//screen ratio
+	GLfloat ratio;
+
+	//Make sure the height is  always above 1
+	if (height == 0)
+	{
+		height = 1;
+	}
+
+	//Calculate screen rotation
+	ratio = (GLfloat)width / (GLfloat)height;
+
+	//Setup viewport
+	glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+
+	//Change to projection matrix mode
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	//Calculate perspective matrix, using glm
+	mat4 projectionMatrix = perspective(radians(45.0f), ratio, 0.1f, 100.0f);
+	glLoadMatrixf(&projectionMatrix[0][0]);
+
+	//Switch to model view
+	glMatrixMode(GL_MODELVIEW);
+
+	//Reset using the identity matrix
+	glLoadIdentity();
+
+}
+

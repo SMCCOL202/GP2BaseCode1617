@@ -30,10 +30,23 @@ public:
 	//Basically runs our game
 	void run();
 
+	void OnBeginRender();
+
+	virtual void render();
+
+	void OnEndRender();
+
+	void update();
+
+	void initGraphics();
+
+	void setViewport(int width, int height);
+
 	void createWindow(const string& windowTitle,const unsigned int width, const unsigned int height, const unsigned int windowFlags=0);
 protected:
 	//SDL Windows
 	SDL_Window * m_pWindow;
+	SDL_GLContext m_GLcontext;
 
 	bool m_bIsRunning;
 	bool m_bIsActive;
